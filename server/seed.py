@@ -1,41 +1,47 @@
-#!/usr/bin/env python3
+from app import app, db
+from models import Restaurant, Pizza, RestaurantPizza
+from faker import Faker
 
-from app import app
-from models import db, Restaurant, Pizza, RestaurantPizza
+fake = Faker()
 
-with app.app_context():
+# Create sample restaurants
+def create_sample_data():
+    with app.app_context():
+        db.create_all()
 
-    # This will delete any existing rows
-    # so you can run the seed file multiple times without having duplicate entries in your database
-    print("Deleting data...")
-    Pizza.query.delete()
-    Restaurant.query.delete()
-    RestaurantPizza.query.delete()
+        # Create some sample restaurants
+        for _ in range(3):
+            restaurant = Restaurant(
+                name=fake.company(),
+                address=fake.address()
+            )
+            db.session.add(restaurant)
 
-    print("Creating restaurants...")
-    shack = Restaurant(name="Karen's Pizza Shack", address='address1')
-    bistro = Restaurant(name="Sanjay's Pizza", address='address2')
-    palace = Restaurant(name="Kiki's Pizza", address='address3')
-    restaurants = [shack, bistro, palace]
+        db.session.commit()
 
-    print("Creating pizzas...")
+        # Create some sample pizzas
+        for _ in range(5):
+            pizza = Pizza(
+                name=fake.word(),
+                ingredients=fake.sentence()
+            )
+            db.session.add(pizza)
 
-    cheese = Pizza(name="Emma", ingredients="Dough, Tomato Sauce, Cheese")
-    pepperoni = Pizza(
-        name="Geri", ingredients="Dough, Tomato Sauce, Cheese, Pepperoni")
-    california = Pizza(
-        name="Melanie", ingredients="Dough, Sauce, Ricotta, Red peppers, Mustard")
-    pizzas = [cheese, pepperoni, california]
+        db.session.commit()
 
-    print("Creating RestaurantPizza...")
+        # Create some restaurant_pizzas
+        restaurants = Restaurant.query.all()
+        pizzas = Pizza.query.all()
+        for restaurant in restaurants:
+            for pizza in pizzas:
+                price = fake.random_number(digits=2)
+                if 1 <= price <= 30:
+                    restaurant_pizza = RestaurantPizza(
+                        price=price, pizza_id=pizza.id, restaurant_id=restaurant.id)
+                    db.session.add(restaurant_pizza)
 
-    pr1 = RestaurantPizza(restaurant=shack, pizza=cheese, price=1)
-    pr2 = RestaurantPizza(restaurant=bistro, pizza=pepperoni, price=4)
-    pr3 = RestaurantPizza(restaurant=palace, pizza=california, price=5)
-    restaurantPizzas = [pr1, pr2, pr3]
-    db.session.add_all(restaurants)
-    db.session.add_all(pizzas)
-    db.session.add_all(restaurantPizzas)
-    db.session.commit()
+        db.session.commit()
 
-    print("Seeding done!")
+if __name__ == '__main__':
+    create_sample_data()
+    print("Sample data created successfully!")
