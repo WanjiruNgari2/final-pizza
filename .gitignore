@@ -68,3 +68,5 @@ migrations
 instance
 
 .vscode
+pizza_api.egg-info/
+setup.py
